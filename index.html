@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mystic Quest: Legend of the Samurai</title>
+    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        #root {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #9b2226;
+        }
+        button {
+            background-color: #bc6c25;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #ee9b00;
+        }
+        input, select {
+            margin: 10px 0;
+            padding: 5px;
+            width: 100%;
+        }
+        .character-creation, .story-mode, .combat-system, .exploration {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const CharacterCreation = ({ setCharacter, setCurrentScreen }) => {
+            const [name, setName] = React.useState('');
+            const [gender, setGender] = React.useState('');
+            const [appearance, setAppearance] = React.useState('');
+
+            const handleCreateCharacter = () => {
+                setCharacter({ name, gender, appearance, skills: [], level: 1 });
+                setCurrentScreen('storyMode');
+            };
+
+            return (
+                <div className="character-creation">
+                    <h2>Create Your Samurai</h2>
+                    <input type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+                    <select value={gender} onChange={(e) => setGender(e.target.value)}>
+                        <option value="">Select Gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                    </select>
+                    <select value={appearance} onChange={(e) => setAppearance(e.target.value)}>
+                        <option value="">Select Appearance</option>
+                        <option value="warrior">Warrior</option>
+                        <option value="ninja">Ninja</option>
+                        <option value="monk">Monk</option>
+                    </select>
+                    <button onClick={handleCreateCharacter}>Create Character</button>
+                </div>
+            );
+        };
+
+        const StoryMode = ({ character, gameState, setGameState, setCurrentScreen }) => {
+            const handleStartQuest = () => {
+                setGameState({
+                    ...gameState,
+                    quests: [...gameState.quests, { id: Date.now(), name: 'The Lost Sword', status: 'active' }],
+                });
+                setCurrentScreen('exploration');
+            };
+
+            return (
+                <div className="story-mode">
+                    <h2>Story Mode</h2>
+                    <p>Welcome, {character.name}! Your journey begins in the land of the rising sun.</p>
+                    <button onClick={handleStartQuest}>Start New Quest</button>
+                </div>
+            );
+        };
+
+        const CombatSystem = ({ character, gameState, setGameState, setCurrentScreen }) => {
+            const [enemyHealth, setEnemyHealth] = React.useState(100);
+            const [playerHealth, setPlayerHealth] = React.useState(character.health || 100);
+
+            const attack = () => {
+                const damage = Math.floor(Math.random() * 20) + 1;
+                setEnemyHealth(Math.max(0, enemyHealth - damage));
+                if (enemyHealth - damage <= 0) {
+                    alert('You won the battle!');
+                    setCurrentScreen('exploration');
+                } else {
+                    const enemyDamage = Math.floor(Math.random() * 15) + 1;
+                    setPlayerHealth(Math.max(0, playerHealth - enemyDamage));
+                    if (playerHealth - enemyDamage <= 0) {
+                        alert('You lost the battle!');
+                        setCurrentScreen('exploration');
+                    }
+                }
+            };
+
+            return (
+                <div className="combat-system">
+                    <h2>Combat</h2>
+                    <p>Player Health: {playerHealth}</p>
+                    <p>Enemy Health: {enemyHealth}</p>
+                    <button onClick={attack}>Attack</button>
+                </div>
+            );
+        };
+
+        const Exploration = ({ character, gameState, setGameState, setCurrentScreen }) => {
+            const locations = ['Forest', 'Mountain', 'Village', 'Castle'];
+
+            const handleExplore = (location) => {
+                setGameState({ ...gameState, currentLocation: location });
+                if (Math.random() > 0.5) {
+                    setCurrentScreen('combat');
+                } else {
+                    alert(`You found a treasure in the ${location}!`);
+                }
+            };
+
+            return (
+                <div className="exploration">
+                    <h2>Exploration</h2>
+                    <p>Current Location: {gameState.currentLocation}</p>
+                    {locations.map((location) => (
+                        <button key={location} onClick={() => handleExplore(location)}>
+                            Explore {location}
+                        </button>
+                    ))}
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [currentScreen, setCurrentScreen] = React.useState('characterCreation');
+            const [character, setCharacter] = React.useState(null);
+            const [gameState, setGameState] = React.useState({
+                quests: [],
+                inventory: [],
+                equippedItems: {},
+                currentLocation: 'startingTown',
+            });
+
+            const renderScreen = () => {
+                switch (currentScreen) {
+                    case 'characterCreation':
+                        return <CharacterCreation setCharacter={setCharacter} setCurrentScreen={setCurrentScreen} />;
+                    case 'storyMode':
+                        return <StoryMode character={character} gameState={gameState} setGameState={setGameState} setCurrentScreen={setCurrentScreen} />;
+                    case 'combat':
+                        return <CombatSystem character={character} gameState={gameState} setGameState={setGameState} setCurrentScreen={setCurrentScreen} />;
+                    case 'exploration':
+                        return <Exploration character={character} gameState={gameState} setGameState={setGameState} setCurrentScreen={setCurrentScreen} />;
+                    default:
+                        return <div>Unknown screen</div>;
+                }
+            };
+
+            return (
+                <div className="mystic-quest-app">
+                    <h1>Mystic Quest: Legend of the Samurai</h1>
+                    {renderScreen()}
+                </div>
+            );
+        };
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
